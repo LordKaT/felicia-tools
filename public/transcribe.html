@@ -13,7 +13,7 @@
     <script>
         function makeTranscriptFilename(fileName) {
             const base = fileName.replace(/\.[^/.]+$/, "");
-            return `${base}.transcript.txt`;
+            return `${base}.timestamped.transcript.txt`;
         }
 
         function downloadTextFile(text, filename) {
@@ -26,6 +26,20 @@
             a.click();
             a.remove();
             URL.revokeObjectURL(url);
+        }
+
+        function formatTimestampedTranscript(data) {
+            if (!Array.isArray(data.segments) || data.segments.length === 0) {
+                return data.text || "";
+            }
+
+            return data.segments
+                .map((segment) => {
+                    const timestamp = segment.start || "00:00:00.000";
+                    const text = (segment.text || "").trim();
+                    return `[${timestamp}] ${text}`.trim();
+                })
+                .join("\n");
         }
 
         async function upload() {
@@ -52,10 +66,11 @@
             const data = await response.json();
             console.log(data);
 
-            //document.getElementById("output").textContent = data.text;
+            const transcriptText = formatTimestampedTranscript(data);
+            document.getElementById("output").textContent = transcriptText;
 
             const outName = makeTranscriptFilename(file.name);
-            downloadTextFile(data.text, outName);
+            downloadTextFile(transcriptText, outName);
         }
     </script>
 
