@@ -10,21 +10,50 @@
 <pre id="output"></pre>
 
 <script>
+function makeTranscriptFilename(fileName) {
+    const base = fileName.replace(/\.[^/.]+$/, "");
+    return `${base}.transcript.txt`;
+}
+
+function downloadTextFile(text, filename) {
+    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+}
+
 async function upload() {
+    const file = document.getElementById("audioFile").files[0];
+    if (!file) {
+        alert("Pick a file first.");
+        return;
+    }
 
-    const file = document.getElementById("audioFile").files[0]
-
-    const form = new FormData()
-    form.append("file", file)
+    const form = new FormData();
+    form.append("file", file);
 
     const response = await fetch("/api/transcribe", {
         method: "POST",
         body: form
-    })
+    });
 
-    const data = await response.json()
+    if (!response.ok) {
+        const errText = await response.text();
+        document.getElementById("output").textContent = `Request failed: ${response.status}\n${errText}`;
+        return;
+    }
 
-    document.getElementById("output").textContent = data.text
+    const data = await response.json();
+
+    document.getElementById("output").textContent = data.text;
+
+    const outName = makeTranscriptFilename(file.name);
+    downloadTextFile(data.text, outName);
 }
 </script>
 
