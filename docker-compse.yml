@@ -1,0 +1,9 @@
+services:
+  felicia-tools:
+    image: ghcr.io/LordKaT/telifica-tools:latest
+    container_name: felicia-tools
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    #extra_hosts:
+    #  - "llm.local=192.168.1.50"

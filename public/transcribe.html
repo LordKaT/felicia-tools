@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<h2>Transcriber</h2>
+
+<input type="file" id="audioFile">
+<button onclick="upload()">Transcribe</button>
+
+<pre id="output"></pre>
+
+<script>
+async function upload() {
+
+    const file = document.getElementById("audioFile").files[0]
+
+    const form = new FormData()
+    form.append("file", file)
+
+    const response = await fetch("http://llm.local:7770/transcribe", {
+        method: "POST",
+        body: form
+    })
+
+    const data = await response.json()
+
+    document.getElementById("output").textContent = data.text
+}
+</script>
+
+</body>
+</html>
