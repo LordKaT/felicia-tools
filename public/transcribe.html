@@ -1,61 +1,64 @@
 <!DOCTYPE html>
 <html>
+
 <body>
 
-<h2>Transcriber</h2>
+    <h2>Transcriber</h2>
 
-<input type="file" id="audioFile">
-<button onclick="upload()">Transcribe</button>
+    <input type="file" id="audioFile">
+    <button onclick="upload()">Transcribe</button>
 
-<pre id="output"></pre>
+    <pre id="output"></pre>
 
-<script>
-function makeTranscriptFilename(fileName) {
-    const base = fileName.replace(/\.[^/.]+$/, "");
-    return `${base}.transcript.txt`;
-}
+    <script>
+        function makeTranscriptFilename(fileName) {
+            const base = fileName.replace(/\.[^/.]+$/, "");
+            return `${base}.transcript.txt`;
+        }
 
-function downloadTextFile(text, filename) {
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-}
+        function downloadTextFile(text, filename) {
+            const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        }
 
-async function upload() {
-    const file = document.getElementById("audioFile").files[0];
-    if (!file) {
-        alert("Pick a file first.");
-        return;
-    }
+        async function upload() {
+            const file = document.getElementById("audioFile").files[0];
+            if (!file) {
+                alert("Pick a file first.");
+                return;
+            }
 
-    const form = new FormData();
-    form.append("file", file);
+            const form = new FormData();
+            form.append("file", file);
 
-    const response = await fetch("/api/transcribe", {
-        method: "POST",
-        body: form
-    });
+            const response = await fetch("/api/transcribe", {
+                method: "POST",
+                body: form
+            });
 
-    if (!response.ok) {
-        const errText = await response.text();
-        document.getElementById("output").textContent = `Request failed: ${response.status}\n${errText}`;
-        return;
-    }
+            if (!response.ok) {
+                const errText = await response.text();
+                document.getElementById("output").textContent = `Request failed: ${response.status}\n${errText}`;
+                return;
+            }
 
-    const data = await response.json();
+            const data = await response.json();
+            console.log(data);
 
-    //document.getElementById("output").textContent = data.text;
+            //document.getElementById("output").textContent = data.text;
 
-    const outName = makeTranscriptFilename(file.name);
-    downloadTextFile(data.text, outName);
-}
-</script>
+            const outName = makeTranscriptFilename(file.name);
+            downloadTextFile(data.text, outName);
+        }
+    </script>
 
 </body>
+
 </html>
