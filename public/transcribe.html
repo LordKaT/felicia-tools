@@ -50,7 +50,7 @@ async function upload() {
 
     const data = await response.json();
 
-    document.getElementById("output").textContent = data.text;
+    //document.getElementById("output").textContent = data.text;
 
     const outName = makeTranscriptFilename(file.name);
     downloadTextFile(data.text, outName);
