@@ -17,7 +17,7 @@ async function upload() {
     const form = new FormData()
     form.append("file", file)
 
-    const response = await fetch("http://llm.local:7770/transcribe", {
+    const response = await fetch("/api/", {
         method: "POST",
         body: form
     })
