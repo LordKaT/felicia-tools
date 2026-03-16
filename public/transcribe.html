@@ -8,6 +8,12 @@
     <input type="file" id="audioFile">
     <button onclick="upload()">Transcribe</button>
 
+    <h3>Transcript Input</h3>
+    <textarea id="transcriptInput" rows="16" cols="100"
+        placeholder="Paste a completed timestamped transcript here, or transcribe audio above."></textarea>
+    <br>
+    <button onclick="submitTopics()">Submit Transcript For Topics</button>
+
     <pre id="output"></pre>
 
     <script>
@@ -42,6 +48,31 @@
                 .join("\n");
         }
 
+        async function submitTopics() {
+            const transcript = document.getElementById("transcriptInput").value.trim();
+            if (!transcript) {
+                alert("Paste a transcript first.");
+                return;
+            }
+
+            const response = await fetch("/api/topics", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ transcript })
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                document.getElementById("output").textContent = `Topics request failed: ${response.status}\n${errText}`;
+                return;
+            }
+
+            const data = await response.json();
+            console.log(data);
+        }
+
         async function upload() {
             const file = document.getElementById("audioFile").files[0];
             if (!file) {
@@ -68,6 +99,7 @@
 
             const transcriptText = formatTimestampedTranscript(data);
             document.getElementById("output").textContent = transcriptText;
+            document.getElementById("transcriptInput").value = transcriptText;
 
             const outName = makeTranscriptFilename(file.name);
             downloadTextFile(transcriptText, outName);
