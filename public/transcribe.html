@@ -190,6 +190,12 @@
             font: 0.98rem/1.45 "Courier New", monospace;
         }
 
+        .transcript-scroll {
+            max-height: 340px;
+            overflow: auto;
+            padding-right: 10px;
+        }
+
         .topics-list {
             margin: 0;
             padding-left: 22px;
@@ -268,13 +274,26 @@
     <div class="page">
         <div class="header">
             <h1>Transcriber</h1>
-            <p>Upload media on the left to generate a timestamped transcript, then use the right panel to submit that transcript for topic segmentation.</p>
+            <p>Edit or inspect the transcript on the left, and use the right panel for upload, media preview, detected topics, and the final transcript output.</p>
         </div>
 
         <div class="split-view">
             <section class="panel">
+                <h2>Transcript Topics</h2>
+                <p class="panel-copy">Paste a completed timestamped transcript here, or let the uploader populate it automatically. Topics are generated right after transcription, and you can rerun them manually from here if needed.</p>
+
+                <textarea id="transcriptInput"
+                    placeholder="Paste a completed timestamped transcript here, or transcribe media on the right."></textarea>
+
+                <div class="action-row">
+                    <button id="topicsButton" onclick="submitTopics()">Generate Topics Again</button>
+                    <span id="topicsSpinner" class="spinner" aria-hidden="true"></span>
+                </div>
+            </section>
+
+            <section class="panel">
                 <h2>Uploader</h2>
-                <p class="panel-copy">Choose an audio or video file, transcribe it, and preview the uploaded media here while the transcript is generated.</p>
+                <p class="panel-copy">Choose an audio or video file, transcribe it, preview the uploaded media, and review the generated topics and transcript here.</p>
 
                 <div class="control-stack">
                     <input type="file" id="audioFile" accept="audio/*,video/*">
@@ -292,29 +311,18 @@
                     </div>
                 </div>
 
-                <div class="transcript-box">
-                    <h3>Transcript Output</h3>
-                    <pre id="output" class="empty-state">Your timestamped transcript will appear here after upload.</pre>
-                </div>
-            </section>
-
-            <section class="panel">
-                <h2>Transcript Topics</h2>
-                <p class="panel-copy">Paste a completed timestamped transcript, or let the uploader populate it automatically, then request topic segmentation.</p>
-
-                <textarea id="transcriptInput"
-                    placeholder="Paste a completed timestamped transcript here, or transcribe media on the left."></textarea>
-
-                <div class="action-row">
-                    <button id="topicsButton" onclick="submitTopics()">Submit Transcript For Topics</button>
-                    <span id="topicsSpinner" class="spinner" aria-hidden="true"></span>
-                </div>
-
                 <div class="topics-box">
                     <h3>Detected Topics</h3>
                     <ol id="topicsList" class="topics-list"></ol>
                     <p id="topicsEmpty" class="empty-state">Topic segments will appear here after the `/topics` request completes.</p>
                     <p id="topicsStatus" class="status-message"></p>
+                </div>
+
+                <div class="transcript-box">
+                    <h3>Transcript Output</h3>
+                    <div class="transcript-scroll">
+                        <pre id="output" class="empty-state">Your timestamped transcript will appear here after upload.</pre>
+                    </div>
                 </div>
             </section>
         </div>
@@ -487,8 +495,9 @@
             placeholder.style.display = "none";
         }
 
-        async function submitTopics() {
-            const transcript = document.getElementById("transcriptInput").value.trim();
+        async function submitTopics(transcriptOverride = null) {
+            const transcriptSource = transcriptOverride ?? document.getElementById("transcriptInput").value;
+            const transcript = transcriptSource.trim();
             if (!transcript) {
                 alert("Paste a transcript first.");
                 return;
@@ -509,8 +518,7 @@
 
                 if (!response.ok) {
                     const errText = await response.text();
-                    setStatusMessage(`Topics request failed: ${response.status}`, true);
-                    document.getElementById("output").textContent = `Topics request failed: ${response.status}\n${errText}`;
+                    setStatusMessage(`Topics request failed: ${response.status} ${errText}`, true);
                     return;
                 }
 
@@ -520,7 +528,6 @@
                 setStatusMessage(`Loaded ${Array.isArray(data) ? data.length : 0} topic entries.`);
             } catch (error) {
                 setStatusMessage(`Topics request failed: ${error}`, true);
-                document.getElementById("output").textContent = `Topics request failed: ${error}`;
             } finally {
                 setTopicsBusy(false);
             }
@@ -558,11 +565,11 @@
                 const transcriptText = formatTimestampedTranscript(data);
                 document.getElementById("output").textContent = transcriptText;
                 document.getElementById("transcriptInput").value = transcriptText;
-                clearTopicsList();
-                setStatusMessage("Transcript ready. Submit it for topic extraction.");
+                setStatusMessage("Transcript ready. Generating topics...");
 
                 const outName = makeTranscriptFilename(file.name);
                 downloadTextFile(transcriptText, outName);
+                submitTopics(transcriptText);
             } catch (error) {
                 document.getElementById("output").textContent = `Request failed: ${error}`;
             } finally {
