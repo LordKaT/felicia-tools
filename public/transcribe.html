@@ -274,26 +274,25 @@
     <div class="page">
         <div class="header">
             <h1>Transcriber</h1>
-            <p>Edit or inspect the transcript on the left, and use the right panel for upload, media preview, detected topics, and the final transcript output.</p>
+            <p>The left pane is the video player. The right pane stacks upload controls, topic generation, and the transcript output.</p>
         </div>
 
         <div class="split-view">
             <section class="panel">
-                <h2>Transcript Topics</h2>
-                <p class="panel-copy">Paste a completed timestamped transcript here, or let the uploader populate it automatically. Topics are generated right after transcription, and you can rerun them manually from here if needed.</p>
-
-                <textarea id="transcriptInput"
-                    placeholder="Paste a completed timestamped transcript here, or transcribe media on the right."></textarea>
-
-                <div class="action-row">
-                    <button id="topicsButton" onclick="submitTopics()">Generate Topics Again</button>
-                    <span id="topicsSpinner" class="spinner" aria-hidden="true"></span>
+                <h2>Video</h2>
+                <p class="panel-copy">Load media on the right, then use the player here to review the recording and jump to detected topic timestamps.</p>
+                <div class="media-shell">
+                    <video id="mediaPreview" controls playsinline></video>
+                    <div id="mediaPlaceholder" class="media-placeholder">
+                        <strong>No media loaded</strong>
+                        Select a file on the right to preview it here.
+                    </div>
                 </div>
             </section>
 
             <section class="panel">
-                <h2>Uploader</h2>
-                <p class="panel-copy">Choose an audio or video file, transcribe it, preview the uploaded media, and review the generated topics and transcript here.</p>
+                <h2>Upload</h2>
+                <p class="panel-copy">Choose an audio or video file to generate a timestamped transcript and automatically build topics.</p>
 
                 <div class="control-stack">
                     <input type="file" id="audioFile" accept="audio/*,video/*">
@@ -303,16 +302,15 @@
                     </div>
                 </div>
 
-                <div class="media-shell">
-                    <video id="mediaPreview" controls playsinline></video>
-                    <div id="mediaPlaceholder" class="media-placeholder">
-                        <strong>No media loaded</strong>
-                        Select a file to preview it here before or during transcription.
-                    </div>
-                </div>
-
                 <div class="topics-box">
-                    <h3>Detected Topics</h3>
+                    <h3>Topics</h3>
+                    <p class="panel-copy">The transcript is stored below and topics are generated automatically after transcription. You can also edit the transcript and regenerate topics manually.</p>
+                    <textarea id="transcriptInput"
+                        placeholder="Paste a completed timestamped transcript here, or transcribe media above."></textarea>
+                    <div class="action-row">
+                        <button id="topicsButton" onclick="submitTopics()">Generate Topics Again</button>
+                        <span id="topicsSpinner" class="spinner" aria-hidden="true"></span>
+                    </div>
                     <ol id="topicsList" class="topics-list"></ol>
                     <p id="topicsEmpty" class="empty-state">Topic segments will appear here after the `/topics` request completes.</p>
                     <p id="topicsStatus" class="status-message"></p>
