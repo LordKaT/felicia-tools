@@ -3,23 +3,132 @@
 
 <head>
     <style>
+        :root {
+            --bg: #f3efe6;
+            --panel: #fffaf0;
+            --panel-strong: #f7f0df;
+            --border: #d3c7ac;
+            --text: #2c2417;
+            --muted: #6b5f49;
+            --accent: #8a5a2b;
+            --accent-strong: #6e4318;
+            --danger: #8f2d1f;
+            --shadow: 0 18px 40px rgba(74, 54, 24, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            font-family: Georgia, "Times New Roman", serif;
+            background:
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), transparent 35%),
+                linear-gradient(135deg, #f6f2e9 0%, #ece2cc 100%);
+            color: var(--text);
+        }
+
+        .page {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 32px 24px 40px;
+        }
+
+        .header {
+            margin-bottom: 24px;
+        }
+
+        .header h1 {
+            margin: 0 0 8px;
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            line-height: 0.95;
+            letter-spacing: -0.03em;
+        }
+
+        .header p {
+            margin: 0;
+            max-width: 760px;
+            color: var(--muted);
+            font-size: 1rem;
+        }
+
+        .split-view {
+            display: grid;
+            grid-template-columns: minmax(320px, 0.9fr) minmax(420px, 1.1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            background: rgba(255, 250, 240, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            box-shadow: var(--shadow);
             padding: 24px;
+            backdrop-filter: blur(4px);
+        }
+
+        .panel h2,
+        .panel h3 {
+            margin: 0 0 10px;
+        }
+
+        .panel-copy {
+            margin: 0 0 18px;
+            color: var(--muted);
+            font-size: 0.96rem;
+        }
+
+        .control-stack {
+            display: grid;
+            gap: 12px;
         }
 
         .action-row {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 16px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.65);
+        }
+
+        button {
+            appearance: none;
+            border: 0;
+            border-radius: 999px;
+            padding: 12px 18px;
+            background: var(--accent);
+            color: #fff7ed;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.2s ease, opacity 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: var(--accent-strong);
+        }
+
+        button:disabled,
+        textarea:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
         }
 
         .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid #d4d4d4;
-            border-top-color: #444;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(44, 36, 23, 0.18);
+            border-top-color: var(--accent-strong);
             border-radius: 50%;
             display: none;
             animation: spin 0.8s linear infinite;
@@ -29,17 +138,90 @@
             display: inline-block;
         }
 
-        button:disabled,
-        textarea:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
+        .media-shell {
+            margin-top: 18px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: linear-gradient(160deg, #20170f 0%, #43352a 100%);
+            border: 1px solid rgba(44, 36, 23, 0.12);
+        }
+
+        #mediaPreview {
+            width: 100%;
+            display: none;
+            background: #000;
+        }
+
+        #mediaPreview.has-source {
+            display: block;
+        }
+
+        .media-placeholder {
+            padding: 48px 24px;
+            text-align: center;
+            color: #eadfcb;
+        }
+
+        .media-placeholder strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            color: #fff6e7;
+        }
+
+        .transcript-box,
+        .topics-box {
+            margin-top: 18px;
+            padding: 18px;
+            border-radius: 18px;
+            background: var(--panel-strong);
+            border: 1px solid rgba(138, 90, 43, 0.18);
         }
 
         textarea {
-            display: block;
-            width: min(100%, 960px);
-            box-sizing: border-box;
-            margin-bottom: 12px;
+            width: 100%;
+            min-height: 320px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            resize: vertical;
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--text);
+            font: 0.98rem/1.45 "Courier New", monospace;
+        }
+
+        .topics-list {
+            margin: 0;
+            padding-left: 22px;
+        }
+
+        .topics-list li + li {
+            margin-top: 10px;
+        }
+
+        .topic-time {
+            display: inline-block;
+            min-width: 86px;
+            margin-right: 8px;
+            color: var(--accent-strong);
+            font-weight: 700;
+        }
+
+        .empty-state,
+        .status-message {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .status-message.is-error {
+            color: var(--danger);
+        }
+
+        pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font: 0.92rem/1.5 "Courier New", monospace;
         }
 
         @keyframes spin {
@@ -47,30 +229,83 @@
                 transform: rotate(360deg);
             }
         }
+
+        @media (max-width: 960px) {
+            .split-view {
+                grid-template-columns: 1fr;
+            }
+
+            .page {
+                padding: 20px 16px 28px;
+            }
+
+            .panel {
+                padding: 18px;
+                border-radius: 18px;
+            }
+        }
     </style>
 </head>
 
 <body>
+    <div class="page">
+        <div class="header">
+            <h1>Transcriber</h1>
+            <p>Upload media on the left to generate a timestamped transcript, then use the right panel to submit that transcript for topic segmentation.</p>
+        </div>
 
-    <h2>Transcriber</h2>
+        <div class="split-view">
+            <section class="panel">
+                <h2>Uploader</h2>
+                <p class="panel-copy">Choose an audio or video file, transcribe it, and preview the uploaded media here while the transcript is generated.</p>
 
-    <input type="file" id="audioFile">
-    <div class="action-row">
-        <button id="uploadButton" onclick="upload()">Transcribe</button>
-        <span id="uploadSpinner" class="spinner" aria-hidden="true"></span>
+                <div class="control-stack">
+                    <input type="file" id="audioFile" accept="audio/*,video/*">
+                    <div class="action-row">
+                        <button id="uploadButton" onclick="upload()">Transcribe</button>
+                        <span id="uploadSpinner" class="spinner" aria-hidden="true"></span>
+                    </div>
+                </div>
+
+                <div class="media-shell">
+                    <video id="mediaPreview" controls playsinline></video>
+                    <div id="mediaPlaceholder" class="media-placeholder">
+                        <strong>No media loaded</strong>
+                        Select a file to preview it here before or during transcription.
+                    </div>
+                </div>
+
+                <div class="transcript-box">
+                    <h3>Transcript Output</h3>
+                    <pre id="output" class="empty-state">Your timestamped transcript will appear here after upload.</pre>
+                </div>
+            </section>
+
+            <section class="panel">
+                <h2>Transcript Topics</h2>
+                <p class="panel-copy">Paste a completed timestamped transcript, or let the uploader populate it automatically, then request topic segmentation.</p>
+
+                <textarea id="transcriptInput"
+                    placeholder="Paste a completed timestamped transcript here, or transcribe media on the left."></textarea>
+
+                <div class="action-row">
+                    <button id="topicsButton" onclick="submitTopics()">Submit Transcript For Topics</button>
+                    <span id="topicsSpinner" class="spinner" aria-hidden="true"></span>
+                </div>
+
+                <div class="topics-box">
+                    <h3>Detected Topics</h3>
+                    <ol id="topicsList" class="topics-list"></ol>
+                    <p id="topicsEmpty" class="empty-state">Topic segments will appear here after the `/topics` request completes.</p>
+                    <p id="topicsStatus" class="status-message"></p>
+                </div>
+            </section>
+        </div>
     </div>
-
-    <h3>Transcript Input</h3>
-    <textarea id="transcriptInput" rows="16" cols="100"
-        placeholder="Paste a completed timestamped transcript here, or transcribe audio above."></textarea>
-    <div class="action-row">
-        <button id="topicsButton" onclick="submitTopics()">Submit Transcript For Topics</button>
-        <span id="topicsSpinner" class="spinner" aria-hidden="true"></span>
-    </div>
-
-    <pre id="output"></pre>
 
     <script>
+        let previewUrl = null;
+
         function makeTranscriptFilename(fileName) {
             const base = fileName.replace(/\.[^/.]+$/, "");
             return `${base}.timestamped.transcript.txt`;
@@ -113,6 +348,69 @@
             document.getElementById("topicsSpinner").classList.toggle("is-active", isBusy);
         }
 
+        function setStatusMessage(message, isError = false) {
+            const status = document.getElementById("topicsStatus");
+            status.textContent = message;
+            status.classList.toggle("is-error", isError);
+        }
+
+        function clearTopicsList() {
+            document.getElementById("topicsList").innerHTML = "";
+            document.getElementById("topicsEmpty").style.display = "block";
+        }
+
+        function renderTopics(topics) {
+            const list = document.getElementById("topicsList");
+            const empty = document.getElementById("topicsEmpty");
+            list.innerHTML = "";
+
+            if (!Array.isArray(topics) || topics.length === 0) {
+                empty.style.display = "block";
+                return;
+            }
+
+            empty.style.display = "none";
+
+            topics.forEach((topic) => {
+                const item = document.createElement("li");
+                const time = document.createElement("span");
+                const title = document.createElement("span");
+
+                time.className = "topic-time";
+                time.textContent = topic.start || "Unknown";
+                title.textContent = topic.topic || "Untitled topic";
+
+                item.appendChild(time);
+                item.appendChild(title);
+                list.appendChild(item);
+            });
+        }
+
+        function loadSelectedMedia() {
+            const file = document.getElementById("audioFile").files[0];
+            const player = document.getElementById("mediaPreview");
+            const placeholder = document.getElementById("mediaPlaceholder");
+
+            if (previewUrl) {
+                URL.revokeObjectURL(previewUrl);
+                previewUrl = null;
+            }
+
+            if (!file) {
+                player.pause();
+                player.removeAttribute("src");
+                player.load();
+                player.classList.remove("has-source");
+                placeholder.style.display = "block";
+                return;
+            }
+
+            previewUrl = URL.createObjectURL(file);
+            player.src = previewUrl;
+            player.classList.add("has-source");
+            placeholder.style.display = "none";
+        }
+
         async function submitTopics() {
             const transcript = document.getElementById("transcriptInput").value.trim();
             if (!transcript) {
@@ -121,6 +419,8 @@
             }
 
             setTopicsBusy(true);
+            setStatusMessage("Generating topic breakdown...");
+            clearTopicsList();
 
             try {
                 const response = await fetch("/api/topics", {
@@ -133,13 +433,17 @@
 
                 if (!response.ok) {
                     const errText = await response.text();
+                    setStatusMessage(`Topics request failed: ${response.status}`, true);
                     document.getElementById("output").textContent = `Topics request failed: ${response.status}\n${errText}`;
                     return;
                 }
 
                 const data = await response.json();
                 console.log(data);
+                renderTopics(data);
+                setStatusMessage(`Loaded ${Array.isArray(data) ? data.length : 0} topic entries.`);
             } catch (error) {
+                setStatusMessage(`Topics request failed: ${error}`, true);
                 document.getElementById("output").textContent = `Topics request failed: ${error}`;
             } finally {
                 setTopicsBusy(false);
@@ -156,7 +460,9 @@
             const form = new FormData();
             form.append("file", file);
 
+            loadSelectedMedia();
             setUploadBusy(true);
+            document.getElementById("output").textContent = "Transcription in progress...";
 
             try {
                 const response = await fetch("/api/transcribe", {
@@ -176,6 +482,8 @@
                 const transcriptText = formatTimestampedTranscript(data);
                 document.getElementById("output").textContent = transcriptText;
                 document.getElementById("transcriptInput").value = transcriptText;
+                clearTopicsList();
+                setStatusMessage("Transcript ready. Submit it for topic extraction.");
 
                 const outName = makeTranscriptFilename(file.name);
                 downloadTextFile(transcriptText, outName);
@@ -185,8 +493,9 @@
                 setUploadBusy(false);
             }
         }
-    </script>
 
+        document.getElementById("audioFile").addEventListener("change", loadSelectedMedia);
+    </script>
 </body>
 
 </html>
