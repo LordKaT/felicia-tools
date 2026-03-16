@@ -199,12 +199,29 @@
             margin-top: 10px;
         }
 
+        .topic-entry {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .topic-time {
-            display: inline-block;
             min-width: 86px;
-            margin-right: 8px;
             color: var(--accent-strong);
             font-weight: 700;
+        }
+
+        .topic-link {
+            color: var(--accent-strong);
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.15em;
+            cursor: pointer;
+        }
+
+        .topic-link:hover {
+            color: var(--text);
         }
 
         .empty-state,
@@ -359,6 +376,48 @@
             document.getElementById("topicsEmpty").style.display = "block";
         }
 
+        function parseTimestampToSeconds(timestamp) {
+            const match = String(timestamp).trim().match(/^(\d{2,}):(\d{2}):(\d{2})(?:\.(\d+))?$/);
+            if (!match) {
+                return null;
+            }
+
+            const hours = Number(match[1]);
+            const minutes = Number(match[2]);
+            const seconds = Number(match[3]);
+            const fractional = match[4] ? Number(`0.${match[4]}`) : 0;
+
+            return (hours * 3600) + (minutes * 60) + seconds + fractional;
+        }
+
+        function seekMediaToTimestamp(timestamp) {
+            const player = document.getElementById("mediaPreview");
+            const seconds = parseTimestampToSeconds(timestamp);
+
+            if (seconds === null) {
+                setStatusMessage(`Could not parse topic timestamp: ${timestamp}`, true);
+                return;
+            }
+
+            if (!player.getAttribute("src")) {
+                setStatusMessage("Load a media file first before jumping to a topic.", true);
+                return;
+            }
+
+            const applySeek = () => {
+                const maxTime = Number.isFinite(player.duration) ? Math.max(player.duration - 0.05, 0) : seconds;
+                player.currentTime = Math.min(seconds, maxTime);
+                setStatusMessage(`Jumped to ${timestamp}.`);
+            };
+
+            if (player.readyState >= 1) {
+                applySeek();
+                return;
+            }
+
+            player.addEventListener("loadedmetadata", applySeek, { once: true });
+        }
+
         function renderTopics(topics) {
             const list = document.getElementById("topicsList");
             const empty = document.getElementById("topicsEmpty");
@@ -373,15 +432,32 @@
 
             topics.forEach((topic) => {
                 const item = document.createElement("li");
-                const time = document.createElement("span");
-                const title = document.createElement("span");
+                const row = document.createElement("div");
+                const time = document.createElement("a");
+                const title = document.createElement("a");
+                const timestamp = topic.start || "Unknown";
+
+                row.className = "topic-entry";
 
                 time.className = "topic-time";
-                time.textContent = topic.start || "Unknown";
+                time.classList.add("topic-link");
+                time.href = "#";
+                time.textContent = timestamp;
+
+                title.className = "topic-link";
+                title.href = "#";
                 title.textContent = topic.topic || "Untitled topic";
 
-                item.appendChild(time);
-                item.appendChild(title);
+                [time, title].forEach((link) => {
+                    link.addEventListener("click", (event) => {
+                        event.preventDefault();
+                        seekMediaToTimestamp(timestamp);
+                    });
+                });
+
+                row.appendChild(time);
+                row.appendChild(title);
+                item.appendChild(row);
                 list.appendChild(item);
             });
         }
