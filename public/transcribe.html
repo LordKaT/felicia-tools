@@ -1,18 +1,72 @@
 <!DOCTYPE html>
 <html>
 
+<head>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 24px;
+        }
+
+        .action-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #d4d4d4;
+            border-top-color: #444;
+            border-radius: 50%;
+            display: none;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .spinner.is-active {
+            display: inline-block;
+        }
+
+        button:disabled,
+        textarea:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        textarea {
+            display: block;
+            width: min(100%, 960px);
+            box-sizing: border-box;
+            margin-bottom: 12px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+
 <body>
 
     <h2>Transcriber</h2>
 
     <input type="file" id="audioFile">
-    <button onclick="upload()">Transcribe</button>
+    <div class="action-row">
+        <button id="uploadButton" onclick="upload()">Transcribe</button>
+        <span id="uploadSpinner" class="spinner" aria-hidden="true"></span>
+    </div>
 
     <h3>Transcript Input</h3>
     <textarea id="transcriptInput" rows="16" cols="100"
         placeholder="Paste a completed timestamped transcript here, or transcribe audio above."></textarea>
-    <br>
-    <button onclick="submitTopics()">Submit Transcript For Topics</button>
+    <div class="action-row">
+        <button id="topicsButton" onclick="submitTopics()">Submit Transcript For Topics</button>
+        <span id="topicsSpinner" class="spinner" aria-hidden="true"></span>
+    </div>
 
     <pre id="output"></pre>
 
@@ -48,6 +102,17 @@
                 .join("\n");
         }
 
+        function setUploadBusy(isBusy) {
+            document.getElementById("uploadButton").disabled = isBusy;
+            document.getElementById("uploadSpinner").classList.toggle("is-active", isBusy);
+        }
+
+        function setTopicsBusy(isBusy) {
+            document.getElementById("topicsButton").disabled = isBusy;
+            document.getElementById("transcriptInput").disabled = isBusy;
+            document.getElementById("topicsSpinner").classList.toggle("is-active", isBusy);
+        }
+
         async function submitTopics() {
             const transcript = document.getElementById("transcriptInput").value.trim();
             if (!transcript) {
@@ -55,22 +120,30 @@
                 return;
             }
 
-            const response = await fetch("/api/topics", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ transcript })
-            });
+            setTopicsBusy(true);
 
-            if (!response.ok) {
-                const errText = await response.text();
-                document.getElementById("output").textContent = `Topics request failed: ${response.status}\n${errText}`;
-                return;
+            try {
+                const response = await fetch("/api/topics", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ transcript })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    document.getElementById("output").textContent = `Topics request failed: ${response.status}\n${errText}`;
+                    return;
+                }
+
+                const data = await response.json();
+                console.log(data);
+            } catch (error) {
+                document.getElementById("output").textContent = `Topics request failed: ${error}`;
+            } finally {
+                setTopicsBusy(false);
             }
-
-            const data = await response.json();
-            console.log(data);
         }
 
         async function upload() {
@@ -83,26 +156,34 @@
             const form = new FormData();
             form.append("file", file);
 
-            const response = await fetch("/api/transcribe", {
-                method: "POST",
-                body: form
-            });
+            setUploadBusy(true);
 
-            if (!response.ok) {
-                const errText = await response.text();
-                document.getElementById("output").textContent = `Request failed: ${response.status}\n${errText}`;
-                return;
+            try {
+                const response = await fetch("/api/transcribe", {
+                    method: "POST",
+                    body: form
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    document.getElementById("output").textContent = `Request failed: ${response.status}\n${errText}`;
+                    return;
+                }
+
+                const data = await response.json();
+                console.log(data);
+
+                const transcriptText = formatTimestampedTranscript(data);
+                document.getElementById("output").textContent = transcriptText;
+                document.getElementById("transcriptInput").value = transcriptText;
+
+                const outName = makeTranscriptFilename(file.name);
+                downloadTextFile(transcriptText, outName);
+            } catch (error) {
+                document.getElementById("output").textContent = `Request failed: ${error}`;
+            } finally {
+                setUploadBusy(false);
             }
-
-            const data = await response.json();
-            console.log(data);
-
-            const transcriptText = formatTimestampedTranscript(data);
-            document.getElementById("output").textContent = transcriptText;
-            document.getElementById("transcriptInput").value = transcriptText;
-
-            const outName = makeTranscriptFilename(file.name);
-            downloadTextFile(transcriptText, outName);
         }
     </script>
 
